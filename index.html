@@ -1,0 +1,2228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HIB — Built for Ironman 70.3</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+  <style>
+    :root {
+      --lime:    #C9F365;
+      --lime-2:  #8CCF2E;
+      --lime-3:  #B5DB58;
+      --neutral: #D4D4D4;
+      --bg:      #030303;
+      --surface: #0B0B0B;
+      --card:    #101010;
+      --card-2:  #141414;
+      --border:  rgba(140,207,46,.18);
+      --glow:    0 0 45px -10px rgba(201,243,101,.6);
+      --r:       9999px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--neutral);
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Scrollbar ─────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 9999px; }
+
+    /* ── Canvas ────────────────────────────── */
+    #webgl-bg {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── App wrapper ───────────────────────── */
+    #app { position: relative; z-index: 10; }
+
+    /* ── Nav ───────────────────────────────── */
+    .nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      height: 68px;
+      display: flex;
+      align-items: center;
+      backdrop-filter: blur(20px) saturate(1.4);
+      -webkit-backdrop-filter: blur(20px) saturate(1.4);
+      background: rgba(3,3,3,.7);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-inner {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -.04em;
+      color: #fff;
+    }
+
+    .logo span { color: var(--lime); }
+
+    .nav-links {
+      display: flex;
+      gap: 32px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--neutral);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: color 150ms ease;
+    }
+
+    .nav-links a:hover { color: var(--lime); }
+
+    .nav-ctas { display: flex; gap: 12px; align-items: center; }
+
+    /* ── Buttons ───────────────────────────── */
+    .btn-primary {
+      background: var(--lime);
+      color: #000;
+      border-radius: var(--r);
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 150ms cubic-bezier(.4,0,.2,1);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn-primary:hover {
+      background: var(--lime-3);
+      transform: translateY(-1px);
+      box-shadow: var(--glow);
+    }
+
+    .btn-primary.lg { padding: 16px 32px; font-size: 16px; }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--neutral);
+      border-radius: var(--r);
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 1;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 150ms cubic-bezier(.4,0,.2,1);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn-outline:hover {
+      border-color: var(--lime);
+      color: var(--lime);
+      transform: translateY(-1px);
+    }
+
+    .btn-outline.lg { padding: 16px 32px; font-size: 16px; }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--lime-3);
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 150ms ease;
+    }
+
+    .btn-ghost:hover { color: var(--lime); }
+
+    /* ── Pills / Badges ────────────────────── */
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: var(--r);
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 1;
+      border: 1px solid var(--border);
+      background: rgba(201,243,101,.06);
+      color: var(--lime);
+    }
+
+    .pill-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--lime);
+      animation: blink 2s ease infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .3; }
+    }
+
+    /* ── Cards ─────────────────────────────── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px;
+      transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+    }
+
+    .card:hover {
+      border-color: rgba(201,243,101,.4);
+      box-shadow: var(--glow);
+      transform: translateY(-2px);
+    }
+
+    .card-lime {
+      background: var(--lime);
+      color: #000;
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: var(--glow);
+      transition: transform 150ms ease, box-shadow 150ms ease;
+    }
+
+    .card-lime:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 60px -8px rgba(201,243,101,.8);
+    }
+
+    /* ── Section layout ────────────────────── */
+    .section {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 96px 24px;
+    }
+
+    .section-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--lime);
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-size: 48px;
+      font-weight: 400;
+      letter-spacing: -.025em;
+      line-height: 1.05;
+      color: #fff;
+      margin-bottom: 16px;
+    }
+
+    .section-sub {
+      font-size: 18px;
+      line-height: 1.625;
+      color: var(--neutral);
+      max-width: 560px;
+    }
+
+    /* ── Hero ──────────────────────────────── */
+    #hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 120px 24px 80px;
+      position: relative;
+    }
+
+    #hero::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 200px;
+      background: linear-gradient(to top, var(--bg), transparent);
+      pointer-events: none;
+    }
+
+    .hero-title {
+      font-size: clamp(56px, 8vw, 96px);
+      font-weight: 800;
+      letter-spacing: -.04em;
+      line-height: .95;
+      color: #fff;
+      margin-bottom: 24px;
+    }
+
+    .hero-title .accent { color: var(--lime); }
+
+    .hero-sub {
+      font-size: 18px;
+      line-height: 1.65;
+      color: var(--neutral);
+      max-width: 560px;
+      margin: 0 auto 36px;
+    }
+
+    .hero-ctas {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 64px;
+    }
+
+    .hero-distance-pills {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .dist-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      border-radius: var(--r);
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.03);
+      backdrop-filter: blur(8px);
+      transition: all 150ms ease;
+    }
+
+    .dist-pill:hover {
+      border-color: var(--lime);
+      background: rgba(201,243,101,.06);
+    }
+
+    .dist-pill-num {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -.02em;
+    }
+
+    .dist-pill-label {
+      font-size: 12px;
+      color: var(--neutral);
+      letter-spacing: .05em;
+    }
+
+    .dist-divider {
+      width: 1px;
+      height: 24px;
+      background: var(--border);
+    }
+
+    /* ── Discipline cards ──────────────────── */
+    .discipline-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .discipline-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+      position: relative;
+      overflow: hidden;
+      transition: all 150ms ease;
+    }
+
+    .discipline-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 3px;
+      background: var(--lime);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 300ms cubic-bezier(.4,0,.2,1);
+    }
+
+    .discipline-card:hover::before { transform: scaleX(1); }
+
+    .discipline-card:hover {
+      border-color: rgba(201,243,101,.35);
+      box-shadow: var(--glow);
+      transform: translateY(-3px);
+    }
+
+    .disc-icon {
+      width: 48px; height: 48px;
+      border-radius: var(--r);
+      background: rgba(201,243,101,.1);
+      border: 1px solid rgba(201,243,101,.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      color: var(--lime);
+    }
+
+    .disc-distance {
+      font-size: 40px;
+      font-weight: 800;
+      letter-spacing: -.04em;
+      color: #fff;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .disc-unit {
+      font-size: 16px;
+      font-weight: 400;
+      color: var(--neutral);
+      margin-left: 4px;
+    }
+
+    .disc-km {
+      font-size: 14px;
+      color: var(--neutral);
+      margin-bottom: 16px;
+    }
+
+    .disc-type {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--lime-3);
+      margin-bottom: 20px;
+    }
+
+    .disc-metrics {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      border-top: 1px solid var(--border);
+      padding-top: 20px;
+    }
+
+    .disc-metric {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--neutral);
+    }
+
+    .disc-metric svg { color: var(--lime); flex-shrink: 0; }
+
+    /* ── Feature cards ─────────────────────── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .feature-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      transition: all 150ms ease;
+    }
+
+    .feature-card:hover {
+      border-color: rgba(201,243,101,.35);
+      box-shadow: var(--glow);
+      transform: translateY(-2px);
+    }
+
+    .feature-icon {
+      width: 44px; height: 44px;
+      border-radius: var(--r);
+      background: rgba(201,243,101,.1);
+      border: 1px solid rgba(201,243,101,.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 18px;
+      color: var(--lime);
+      transition: all 150ms ease;
+    }
+
+    .feature-card:hover .feature-icon {
+      background: rgba(201,243,101,.18);
+      box-shadow: 0 0 20px -4px rgba(201,243,101,.4);
+    }
+
+    .feature-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    .feature-desc {
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--neutral);
+    }
+
+    /* ── Analytics dashboard mockup ────────── */
+    .dashboard {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+    }
+
+    .dash-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .dash-title { font-size: 14px; font-weight: 600; color: #fff; }
+    .dash-sub { font-size: 12px; color: var(--neutral); }
+
+    .dash-body {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 0;
+    }
+
+    .dash-left { padding: 24px; border-right: 1px solid var(--border); }
+    .dash-right { padding: 24px; }
+
+    .activity-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .activity-item:last-child { border-bottom: none; }
+
+    .activity-icon {
+      width: 38px; height: 38px;
+      border-radius: var(--r);
+      background: rgba(201,243,101,.1);
+      border: 1px solid rgba(201,243,101,.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: var(--lime);
+    }
+
+    .activity-name { font-size: 14px; font-weight: 500; color: #fff; }
+    .activity-meta { font-size: 12px; color: var(--neutral); margin-top: 2px; }
+
+    .activity-stat {
+      margin-left: auto;
+      text-align: right;
+    }
+
+    .activity-time { font-size: 14px; font-weight: 600; color: #fff; }
+    .activity-pace { font-size: 12px; color: var(--lime); margin-top: 2px; }
+
+    /* Weekly bar chart */
+    .week-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      height: 100px;
+      margin-bottom: 8px;
+    }
+
+    .week-bar-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      height: 100%;
+      justify-content: flex-end;
+    }
+
+    .week-bar {
+      width: 100%;
+      border-radius: 4px 4px 0 0;
+      background: var(--lime);
+      opacity: .7;
+      transition: opacity 150ms ease;
+      transform-origin: bottom;
+      transform: scaleY(0);
+    }
+
+    .week-bar:hover { opacity: 1; }
+
+    .week-day {
+      font-size: 10px;
+      color: var(--neutral);
+      font-weight: 500;
+    }
+
+    /* Donut chart */
+    .donut-wrap {
+      position: relative;
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 16px;
+    }
+
+    .donut {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: conic-gradient(
+        var(--lime) 0% 14%,
+        var(--lime-2) 14% 76%,
+        var(--lime-3) 76% 100%
+      );
+    }
+
+    .donut-hole {
+      position: absolute;
+      inset: 20px;
+      border-radius: 50%;
+      background: var(--card-2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .donut-center-num { font-size: 16px; font-weight: 700; color: #fff; }
+    .donut-center-label { font-size: 10px; color: var(--neutral); }
+
+    /* Metric chips */
+    .metric-row {
+      display: grid;
+      grid-template-columns: repeat(3,1fr);
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .metric-chip {
+      background: var(--card-2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .metric-chip-num { font-size: 18px; font-weight: 700; color: var(--lime); }
+    .metric-chip-label { font-size: 10px; color: var(--neutral); margin-top: 2px; }
+
+    /* ── Training plans ─────────────────────── */
+    .plans-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .plan-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      transition: all 150ms ease;
+    }
+
+    .plan-card:hover {
+      border-color: rgba(201,243,101,.3);
+      box-shadow: var(--glow);
+    }
+
+    .plan-card.featured {
+      background: var(--lime);
+      border-color: var(--lime);
+      color: #000;
+    }
+
+    .plan-card.featured:hover {
+      box-shadow: 0 0 60px -8px rgba(201,243,101,.8);
+      transform: translateY(-3px);
+    }
+
+    .plan-badge {
+      display: inline-flex;
+      padding: 4px 12px;
+      border-radius: var(--r);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .plan-badge.dark { background: rgba(0,0,0,.2); color: #000; }
+    .plan-badge.light { background: rgba(201,243,101,.12); color: var(--lime); border: 1px solid rgba(201,243,101,.25); }
+
+    .plan-name { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+    .plan-name.dark { color: #000; }
+    .plan-name.light { color: #fff; }
+
+    .plan-desc { font-size: 14px; line-height: 1.5; margin-bottom: 20px; }
+    .plan-desc.dark { color: rgba(0,0,0,.7); }
+    .plan-desc.light { color: var(--neutral); }
+
+    .plan-hours {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -.04em;
+      margin-bottom: 4px;
+    }
+
+    .plan-hours-label { font-size: 13px; margin-bottom: 20px; }
+
+    .plan-features { display: flex; flex-direction: column; gap: 10px; }
+
+    .plan-feature {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+    }
+
+    .plan-feature-dot {
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .plan-feature-dot.dark { background: rgba(0,0,0,.12); color: #000; }
+    .plan-feature-dot.light { background: rgba(201,243,101,.12); color: var(--lime); }
+
+    /* ── Stats ─────────────────────────────── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4,1fr);
+      gap: 16px;
+    }
+
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      text-align: center;
+      transition: all 150ms ease;
+    }
+
+    .stat-card:hover {
+      border-color: rgba(201,243,101,.3);
+      box-shadow: var(--glow);
+    }
+
+    .stat-num {
+      font-size: 40px;
+      font-weight: 800;
+      letter-spacing: -.04em;
+      color: var(--lime);
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .stat-label { font-size: 14px; color: var(--neutral); }
+
+    /* ── Testimonials ───────────────────────── */
+    .testimonials-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .testimonial-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      transition: all 150ms ease;
+    }
+
+    .testimonial-card:hover {
+      border-color: rgba(201,243,101,.3);
+      box-shadow: var(--glow);
+    }
+
+    .testimonial-quote {
+      font-size: 15px;
+      line-height: 1.65;
+      color: var(--neutral);
+      margin-bottom: 24px;
+    }
+
+    .testimonial-name { font-size: 14px; font-weight: 600; color: #fff; }
+    .testimonial-race { font-size: 12px; color: var(--lime); margin-top: 2px; }
+
+    .stars { color: var(--lime); margin-bottom: 16px; display: flex; gap: 3px; }
+
+    /* ── Pricing ─────────────────────────────── */
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .pricing-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+      transition: all 150ms ease;
+    }
+
+    .pricing-card:hover {
+      border-color: rgba(201,243,101,.3);
+    }
+
+    .pricing-card.featured {
+      background: var(--lime);
+      border-color: var(--lime);
+    }
+
+    .pricing-card.featured:hover {
+      box-shadow: 0 0 60px -8px rgba(201,243,101,.8);
+    }
+
+    .price-tag {
+      font-size: 48px;
+      font-weight: 800;
+      letter-spacing: -.04em;
+      line-height: 1;
+    }
+
+    .price-period { font-size: 14px; font-weight: 400; }
+
+    .price-features { list-style: none; margin-top: 24px; display: flex; flex-direction: column; gap: 12px; }
+
+    .price-feature {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+    }
+
+    /* ── CTA section ─────────────────────────── */
+    #cta {
+      background: rgba(201,243,101,.04);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cta-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 96px 24px;
+      text-align: center;
+    }
+
+    /* ── Footer ──────────────────────────────── */
+    .footer {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 48px 24px;
+    }
+
+    .footer-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 48px;
+    }
+
+    .footer-col h4 {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--lime);
+      margin-bottom: 16px;
+    }
+
+    .footer-links { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+
+    .footer-links a {
+      font-size: 14px;
+      color: var(--neutral);
+      text-decoration: none;
+      transition: color 150ms ease;
+    }
+
+    .footer-links a:hover { color: var(--lime); }
+
+    .footer-bottom {
+      max-width: 1200px;
+      margin: 32px auto 0;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      color: rgba(212,212,212,.5);
+    }
+
+    /* ── Animations ──────────────────────────── */
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .float { animation: float 4s ease-in-out infinite; }
+
+    @keyframes pulse-ring {
+      0% { transform: scale(1); opacity: .6; }
+      100% { transform: scale(1.6); opacity: 0; }
+    }
+
+    .pulse-ring::after {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      border: 2px solid var(--lime);
+      animation: pulse-ring 2s ease-out infinite;
+    }
+
+    /* Scroll-animate: hidden by default */
+    .reveal {
+      opacity: 0;
+      transform: translateY(32px);
+    }
+
+    /* ── Divider ─────────────────────────────── */
+    .sep {
+      width: 48px;
+      height: 3px;
+      background: var(--lime);
+      border-radius: var(--r);
+      margin-bottom: 24px;
+    }
+
+    /* ── Horizontal rule ─────────────────────── */
+    hr { border: none; border-top: 1px solid var(--border); }
+
+    /* ── Race week schedule ──────────────────── */
+    .week-schedule { display: flex; flex-direction: column; gap: 8px; }
+
+    .week-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: var(--r);
+      background: var(--card-2);
+      border: 1px solid var(--border);
+      font-size: 13px;
+      transition: all 150ms ease;
+    }
+
+    .week-row:hover { border-color: rgba(201,243,101,.35); background: rgba(201,243,101,.04); }
+
+    .week-row-day { width: 32px; font-weight: 600; color: var(--lime); }
+    .week-row-type { flex: 1; color: #fff; }
+    .week-row-dur { color: var(--neutral); font-weight: 500; }
+    .week-row-tss {
+      padding: 3px 10px;
+      border-radius: var(--r);
+      background: rgba(201,243,101,.1);
+      color: var(--lime);
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    /* ── Zone bars ────────────────────────── */
+    .zone-bar-row { display: flex; flex-direction: column; gap: 6px; }
+
+    .zone-bar-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+    }
+
+    .zone-label { width: 56px; color: var(--neutral); font-weight: 500; }
+
+    .zone-track {
+      flex: 1;
+      height: 6px;
+      background: rgba(255,255,255,.05);
+      border-radius: var(--r);
+      overflow: hidden;
+    }
+
+    .zone-fill {
+      height: 100%;
+      border-radius: var(--r);
+      background: var(--lime);
+      transform-origin: left;
+      transform: scaleX(0);
+      transition: transform 1s cubic-bezier(.4,0,.2,1);
+    }
+
+    .zone-pct { width: 32px; text-align: right; color: var(--lime); font-weight: 600; }
+
+    /* ── Glow lines decorative ─────────────── */
+    .glow-line {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--lime), transparent);
+      opacity: .3;
+      margin: 0;
+    }
+
+    /* ── Mobile tweaks ───────────────────────── */
+    @media (max-width: 768px) {
+      .section-title { font-size: 36px; }
+      .hero-title { font-size: 48px; }
+      .discipline-grid,
+      .features-grid,
+      .plans-grid,
+      .pricing-grid,
+      .stats-grid,
+      .testimonials-grid { grid-template-columns: 1fr; }
+      .dash-body { grid-template-columns: 1fr; }
+      .dash-right { border-top: 1px solid var(--border); }
+      .footer-inner { flex-wrap: wrap; }
+      .nav-links { display: none; }
+    }
+
+    @media (max-width: 1024px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── WebGL Background Canvas ─────────────────────────────────── -->
+<canvas id="webgl-bg"></canvas>
+
+<!-- ── App ─────────────────────────────────────────────────────── -->
+<div id="app">
+
+  <!-- ── NAV ─────────────────────────────────────────────────── -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <div class="logo">H<span>I</span>B</div>
+
+      <ul class="nav-links">
+        <li><a href="#disciplines">Disciplines</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#plans">Training Plans</a></li>
+        <li><a href="#pricing">Pricing</a></li>
+      </ul>
+
+      <div class="nav-ctas">
+        <button class="btn-ghost">Sign in</button>
+        <a href="#pricing" class="btn-primary">
+          Get Started
+          <i data-lucide="arrow-right" style="width:14px;height:14px;"></i>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── HERO ─────────────────────────────────────────────────── -->
+  <section id="hero">
+    <div id="hero-label" class="pill" style="margin-bottom:28px;">
+      <span class="pill-dot"></span>
+      Built specifically for Ironman 70.3
+    </div>
+
+    <h1 id="hero-title" class="hero-title">
+      Train For<br/><span class="accent">70.3</span> Miles
+    </h1>
+
+    <p id="hero-sub" class="hero-sub">
+      The only training platform engineered for the exact demands of Ironman 70.3.
+      Every stroke, every pedal, every stride — tracked with elite precision.
+    </p>
+
+    <div id="hero-ctas" class="hero-ctas">
+      <a href="#pricing" class="btn-primary lg">
+        Start Free Trial
+        <i data-lucide="arrow-right" style="width:16px;height:16px;"></i>
+      </a>
+      <button class="btn-outline lg">
+        <i data-lucide="play" style="width:16px;height:16px;"></i>
+        Watch Demo
+      </button>
+    </div>
+
+    <div id="hero-pills" class="hero-distance-pills">
+      <div class="dist-pill">
+        <i data-lucide="waves" style="width:16px;height:16px;color:var(--lime);"></i>
+        <div>
+          <div class="dist-pill-num">1.2<span style="font-size:13px;font-weight:500;">mi</span></div>
+          <div class="dist-pill-label">Open Water Swim</div>
+        </div>
+      </div>
+      <div class="dist-divider"></div>
+      <div class="dist-pill">
+        <i data-lucide="bike" style="width:16px;height:16px;color:var(--lime);"></i>
+        <div>
+          <div class="dist-pill-num">56<span style="font-size:13px;font-weight:500;">mi</span></div>
+          <div class="dist-pill-label">Road Bike Course</div>
+        </div>
+      </div>
+      <div class="dist-divider"></div>
+      <div class="dist-pill">
+        <i data-lucide="footprints" style="width:16px;height:16px;color:var(--lime);"></i>
+        <div>
+          <div class="dist-pill-num">13.1<span style="font-size:13px;font-weight:500;">mi</span></div>
+          <div class="dist-pill-label">Half Marathon Run</div>
+        </div>
+      </div>
+      <div class="dist-divider"></div>
+      <div class="dist-pill" style="border-color:rgba(201,243,101,.4);background:rgba(201,243,101,.06);">
+        <i data-lucide="trophy" style="width:16px;height:16px;color:var(--lime);"></i>
+        <div>
+          <div class="dist-pill-num" style="color:var(--lime);">70.3<span style="font-size:13px;font-weight:500;">mi</span></div>
+          <div class="dist-pill-label">Total Race Distance</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="glow-line"></div>
+
+  <!-- ── DISCIPLINES ──────────────────────────────────────────── -->
+  <section id="disciplines">
+    <div class="section">
+      <div class="section-label reveal">
+        <i data-lucide="zap" style="width:14px;height:14px;"></i>
+        Every Discipline
+      </div>
+      <h2 class="section-title reveal">Precision Built<br/>for Each Leg</h2>
+      <p class="section-sub reveal" style="margin-bottom:48px;">
+        Not a generic tracker with a triathlon badge. HIB was designed from the ground up for the unique physics, physiology, and strategy of each 70.3 discipline.
+      </p>
+
+      <div class="discipline-grid">
+
+        <!-- SWIM -->
+        <div class="discipline-card reveal">
+          <div class="disc-icon float">
+            <i data-lucide="waves" style="width:22px;height:22px;"></i>
+          </div>
+          <div class="disc-distance">1.2<span class="disc-unit">mi</span></div>
+          <div class="disc-km">1.9 km open water</div>
+          <div class="disc-type">Swim</div>
+          <div class="disc-metrics">
+            <div class="disc-metric">
+              <i data-lucide="timer" style="width:14px;height:14px;"></i>
+              Pace per 100m tracking
+            </div>
+            <div class="disc-metric">
+              <i data-lucide="activity" style="width:14px;height:14px;"></i>
+              Stroke rate & efficiency
+            </div>
+            <div class="disc-metric">
+              <i data-lucide="map-pin" style="width:14px;height:14px;"></i>
+              Sighting GPS drift analysis
+            </div>
+            <div class="disc-metric">
+              <i data-lucide="thermometer" style="width:14px;height:14px;"></i>
+              Wetsuit threshold alerts
+            </div>
+          </div>
+        </div>
+
+        <!-- BIKE -->
+        <div class="discipline-card reveal">
+          <div class="disc-icon float" style="animation-delay:.5s;">
+            <i data-lucide="bike" style="width:22px;height:22px;"></i>
+          </div>
+          <div class="disc-distance">56<span class="disc-unit">mi</span></div>
+          <div class="disc-km">90.1 km road course</div>
+          <div class="disc-type">Bike</div>
+          <div class="disc-metrics">
+            <div class="disc-metric">
+              <i data-lucide="zap" style="width:14px;height:14px;"></i>
+              Normalized power & IF
+            </div>
+            <div class="disc-metric">
+              <i data-lucide="trending-up" style="width:14px;height:14px;"></i>
+              FTP zones 1–7
+            </div>
+            <div class="disc-metric">
+              <i data-lucide="wind" style="width:14px;height:14px;"></i>
+              Wind & elevation modeling
+            </div>
+            <div class="disc-metric">
+              <i data-lucide="gauge" style="width:14px;height:14px;"></i>
+              Cadence & gearing data
+            </div>
+          </div>
+        </div>
+
+        <!-- RUN -->
+        <div class="discipline-card reveal">
+          <div class="disc-icon float" style="animation-delay:1s;">
+            <i data-lucide="footprints" style="width:22px;height:22px;"></i>
+          </div>
+          <div class="disc-distance">13.1<span class="disc-unit">mi</span></div>
+          <div class="disc-km">21.1 km half marathon</div>
+          <div class="disc-type">Run</div>
+          <div class="disc-metrics">
+            <div class="disc-metric">
+              <i data-lucide="timer" style="width:14px;height:14px;"></i>
+              Run-off-bike (T2) fatigue
+            </div>
+            <div class="disc-metric">
+              <i data-lucide="heart" style="width:14px;height:14px;"></i>
+              Cardiac drift analysis
+            </div>
+            <div class="disc-metric">
+              <i data-lucide="activity" style="width:14px;height:14px;"></i>
+              Ground contact & cadence
+            </div>
+            <div class="disc-metric">
+              <i data-lucide="trending-up" style="width:14px;height:14px;"></i>
+              Pace zone splits
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── ANALYTICS DASHBOARD ─────────────────────────────────── -->
+  <section style="background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
+    <div class="section">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;">
+        <div>
+          <div class="section-label reveal">
+            <i data-lucide="bar-chart-2" style="width:14px;height:14px;"></i>
+            Live Analytics
+          </div>
+          <h2 class="section-title reveal">Your Race,<br/>In Numbers</h2>
+          <p class="section-sub reveal" style="margin-bottom:32px;">
+            Real-time training load, performance metrics, and race-day strategy — all in one dashboard built for 70.3 athletes.
+          </p>
+
+          <!-- Zone bars -->
+          <div class="reveal">
+            <div style="font-size:13px;font-weight:600;color:#fff;margin-bottom:12px;letter-spacing:.04em;text-transform:uppercase;">Power Zones (Last 30 days)</div>
+            <div class="zone-bar-row">
+              <div class="zone-bar-item">
+                <span class="zone-label">Zone 1</span>
+                <div class="zone-track">
+                  <div class="zone-fill" style="--pct:0.08;width:8%;background:rgba(201,243,101,.3);"></div>
+                </div>
+                <span class="zone-pct">8%</span>
+              </div>
+              <div class="zone-bar-item">
+                <span class="zone-label">Zone 2</span>
+                <div class="zone-track">
+                  <div class="zone-fill" style="width:42%;background:rgba(201,243,101,.5);"></div>
+                </div>
+                <span class="zone-pct">42%</span>
+              </div>
+              <div class="zone-bar-item">
+                <span class="zone-label">Zone 3</span>
+                <div class="zone-track">
+                  <div class="zone-fill" style="width:25%;background:rgba(201,243,101,.7);"></div>
+                </div>
+                <span class="zone-pct">25%</span>
+              </div>
+              <div class="zone-bar-item">
+                <span class="zone-label">Zone 4</span>
+                <div class="zone-track">
+                  <div class="zone-fill" style="width:18%;"></div>
+                </div>
+                <span class="zone-pct">18%</span>
+              </div>
+              <div class="zone-bar-item">
+                <span class="zone-label">Zone 5+</span>
+                <div class="zone-track">
+                  <div class="zone-fill" style="width:7%;background:var(--lime-2);"></div>
+                </div>
+                <span class="zone-pct">7%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dashboard mockup -->
+        <div class="reveal">
+          <div class="dashboard">
+            <div class="dash-header">
+              <div>
+                <div class="dash-title">Training Overview</div>
+                <div class="dash-sub">Week 11 of 16 · Base + Build Phase</div>
+              </div>
+              <div class="pill">
+                <span class="pill-dot"></span>
+                Syncing
+              </div>
+            </div>
+
+            <div class="dash-body">
+              <div class="dash-left">
+                <div style="font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--neutral);margin-bottom:4px;">Recent Activities</div>
+
+                <div class="activity-item">
+                  <div class="activity-icon">
+                    <i data-lucide="waves" style="width:16px;height:16px;"></i>
+                  </div>
+                  <div>
+                    <div class="activity-name">OW Swim — Sighting Drill</div>
+                    <div class="activity-meta">1,900m · Buoy course</div>
+                  </div>
+                  <div class="activity-stat">
+                    <div class="activity-time">34:12</div>
+                    <div class="activity-pace">1:48/100m</div>
+                  </div>
+                </div>
+
+                <div class="activity-item">
+                  <div class="activity-icon">
+                    <i data-lucide="bike" style="width:16px;height:16px;"></i>
+                  </div>
+                  <div>
+                    <div class="activity-name">Race-Pace Intervals</div>
+                    <div class="activity-meta">88.2 km · 238W NP · IF 0.81</div>
+                  </div>
+                  <div class="activity-stat">
+                    <div class="activity-time">2:38:44</div>
+                    <div class="activity-pace">247 TSS</div>
+                  </div>
+                </div>
+
+                <div class="activity-item">
+                  <div class="activity-icon">
+                    <i data-lucide="footprints" style="width:16px;height:16px;"></i>
+                  </div>
+                  <div>
+                    <div class="activity-name">Brick Run — Z2/Z3</div>
+                    <div class="activity-meta">12.4 km · Avg HR 158</div>
+                  </div>
+                  <div class="activity-stat">
+                    <div class="activity-time">1:03:20</div>
+                    <div class="activity-pace">5:06/km</div>
+                  </div>
+                </div>
+
+                <!-- Week chart -->
+                <div style="margin-top:20px;">
+                  <div style="font-size:11px;color:var(--neutral);margin-bottom:8px;letter-spacing:.06em;text-transform:uppercase;">Weekly Load (hrs)</div>
+                  <div class="week-chart" id="weekChart">
+                    <div class="week-bar-wrap">
+                      <div class="week-bar" style="height:25%;"></div>
+                      <div class="week-day">M</div>
+                    </div>
+                    <div class="week-bar-wrap">
+                      <div class="week-bar" style="height:50%;"></div>
+                      <div class="week-day">T</div>
+                    </div>
+                    <div class="week-bar-wrap">
+                      <div class="week-bar" style="height:33%;"></div>
+                      <div class="week-day">W</div>
+                    </div>
+                    <div class="week-bar-wrap">
+                      <div class="week-bar" style="height:67%;"></div>
+                      <div class="week-day">T</div>
+                    </div>
+                    <div class="week-bar-wrap">
+                      <div class="week-bar" style="height:25%;background:var(--lime-3);"></div>
+                      <div class="week-day">F</div>
+                    </div>
+                    <div class="week-bar-wrap">
+                      <div class="week-bar" style="height:100%;"></div>
+                      <div class="week-day">S</div>
+                    </div>
+                    <div class="week-bar-wrap">
+                      <div class="week-bar" style="height:50%;"></div>
+                      <div class="week-day">S</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="dash-right">
+                <div style="font-size:11px;color:var(--neutral);margin-bottom:12px;letter-spacing:.06em;text-transform:uppercase;">Discipline Split</div>
+                <div class="donut-wrap">
+                  <div class="donut"></div>
+                  <div class="donut-hole">
+                    <div class="donut-center-num">10.5h</div>
+                    <div class="donut-center-label">This week</div>
+                  </div>
+                </div>
+
+                <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;">
+                  <div style="display:flex;align-items:center;gap:8px;font-size:12px;">
+                    <div style="width:10px;height:10px;border-radius:50%;background:var(--lime);"></div>
+                    <span style="color:var(--neutral);">Swim</span>
+                    <span style="margin-left:auto;color:#fff;font-weight:500;">14%</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;font-size:12px;">
+                    <div style="width:10px;height:10px;border-radius:50%;background:var(--lime-2);"></div>
+                    <span style="color:var(--neutral);">Bike</span>
+                    <span style="margin-left:auto;color:#fff;font-weight:500;">62%</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;font-size:12px;">
+                    <div style="width:10px;height:10px;border-radius:50%;background:var(--lime-3);"></div>
+                    <span style="color:var(--neutral);">Run</span>
+                    <span style="margin-left:auto;color:#fff;font-weight:500;">24%</span>
+                  </div>
+                </div>
+
+                <div class="metric-row">
+                  <div class="metric-chip">
+                    <div class="metric-chip-num">78</div>
+                    <div class="metric-chip-label">CTL</div>
+                  </div>
+                  <div class="metric-chip">
+                    <div class="metric-chip-num" style="color:var(--lime-3);">92</div>
+                    <div class="metric-chip-label">ATL</div>
+                  </div>
+                  <div class="metric-chip">
+                    <div class="metric-chip-num" style="color:rgba(255,120,120,.9);">−14</div>
+                    <div class="metric-chip-label">TSB</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FEATURES ──────────────────────────────────────────────── -->
+  <section id="features">
+    <div class="section">
+      <div class="section-label reveal">
+        <i data-lucide="layers" style="width:14px;height:14px;"></i>
+        Platform Features
+      </div>
+      <h2 class="section-title reveal">Everything Your<br/>70.3 Training Needs</h2>
+      <p class="section-sub reveal" style="margin-bottom:48px;">
+        Six core capabilities — each one dialed for the exact demands of half-iron distance racing.
+      </p>
+
+      <div class="features-grid">
+        <div class="feature-card reveal">
+          <div class="feature-icon">
+            <i data-lucide="activity" style="width:20px;height:20px;"></i>
+          </div>
+          <div class="feature-name">Tri-Sport Analytics</div>
+          <div class="feature-desc">Unified dashboard tracking swim pace, bike power, and run form with discipline-specific metrics and transition analysis.</div>
+        </div>
+
+        <div class="feature-card reveal">
+          <div class="feature-icon">
+            <i data-lucide="zap" style="width:20px;height:20px;"></i>
+          </div>
+          <div class="feature-name">Power Zone Training</div>
+          <div class="feature-desc">FTP-based zones 1–7 with automatic zone detection, normalized power calculations, and intensity factor tracking per ride.</div>
+        </div>
+
+        <div class="feature-card reveal">
+          <div class="feature-icon">
+            <i data-lucide="layers" style="width:20px;height:20px;"></i>
+          </div>
+          <div class="feature-name">Brick Intelligence</div>
+          <div class="feature-desc">Dedicated brick workout builder that models the bike-to-run physiological shift and tracks your off-bike running efficiency over time.</div>
+        </div>
+
+        <div class="feature-card reveal">
+          <div class="feature-icon">
+            <i data-lucide="calendar" style="width:20px;height:20px;"></i>
+          </div>
+          <div class="feature-name">Race Day Planner</div>
+          <div class="feature-desc">Hour-by-hour race strategy with pace targets, nutrition timing, heart-rate ceilings, and contingency plans for heat or wind.</div>
+        </div>
+
+        <div class="feature-card reveal">
+          <div class="feature-icon">
+            <i data-lucide="map-pin" style="width:20px;height:20px;"></i>
+          </div>
+          <div class="feature-name">Course Intelligence</div>
+          <div class="feature-desc">Elevation-adjusted power targets, course-specific interval sets, and real race route uploads so you simulate race day in training.</div>
+        </div>
+
+        <div class="feature-card reveal">
+          <div class="feature-icon">
+            <i data-lucide="heart" style="width:20px;height:20px;"></i>
+          </div>
+          <div class="feature-name">Recovery Tracking</div>
+          <div class="feature-desc">HRV trends, sleep quality scores, and daily readiness ratings integrated into your training load to prevent overreach injuries.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── TRAINING PLANS ────────────────────────────────────────── -->
+  <section id="plans" style="background:var(--surface);border-top:1px solid var(--border);">
+    <div class="section">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:start;">
+        <div>
+          <div class="section-label reveal">
+            <i data-lucide="calendar" style="width:14px;height:14px;"></i>
+            Training Programs
+          </div>
+          <h2 class="section-title reveal">16-Week Plans<br/>for Every Level</h2>
+          <p class="section-sub reveal" style="margin-bottom:32px;">
+            Structured periodized training from base-building through peak taper. Adaptive workouts that adjust to your fitness, fatigue, and life schedule.
+          </p>
+
+          <div class="week-schedule reveal">
+            <div class="week-row">
+              <span class="week-row-day">Mon</span>
+              <span class="week-row-type">
+                <i data-lucide="waves" style="width:12px;height:12px;display:inline;margin-right:6px;color:var(--lime);"></i>
+                Easy swim — technique focus
+              </span>
+              <span class="week-row-dur">45 min</span>
+              <span class="week-row-tss">42 TSS</span>
+            </div>
+            <div class="week-row">
+              <span class="week-row-day">Tue</span>
+              <span class="week-row-type">
+                <i data-lucide="bike" style="width:12px;height:12px;display:inline;margin-right:6px;color:var(--lime);"></i>
+                FTP intervals 4×8 min
+              </span>
+              <span class="week-row-dur">90 min</span>
+              <span class="week-row-tss">98 TSS</span>
+            </div>
+            <div class="week-row">
+              <span class="week-row-day">Wed</span>
+              <span class="week-row-type">
+                <i data-lucide="footprints" style="width:12px;height:12px;display:inline;margin-right:6px;color:var(--lime);"></i>
+                Tempo run 3×12 min Z3
+              </span>
+              <span class="week-row-dur">60 min</span>
+              <span class="week-row-tss">74 TSS</span>
+            </div>
+            <div class="week-row">
+              <span class="week-row-day">Thu</span>
+              <span class="week-row-type">
+                <i data-lucide="bike" style="width:12px;height:12px;display:inline;margin-right:6px;color:var(--lime);"></i>
+                Endurance ride Z2 steady
+              </span>
+              <span class="week-row-dur">2:00 hr</span>
+              <span class="week-row-tss">130 TSS</span>
+            </div>
+            <div class="week-row" style="opacity:.5;">
+              <span class="week-row-day">Fri</span>
+              <span class="week-row-type">Rest / mobility</span>
+              <span class="week-row-dur">—</span>
+              <span class="week-row-tss" style="background:transparent;color:var(--neutral);">0 TSS</span>
+            </div>
+            <div class="week-row">
+              <span class="week-row-day">Sat</span>
+              <span class="week-row-type">
+                <i data-lucide="layers" style="width:12px;height:12px;display:inline;margin-right:6px;color:var(--lime);"></i>
+                Long brick — ride + run
+              </span>
+              <span class="week-row-dur">3:30 hr</span>
+              <span class="week-row-tss">210 TSS</span>
+            </div>
+            <div class="week-row">
+              <span class="week-row-day">Sun</span>
+              <span class="week-row-type">
+                <i data-lucide="footprints" style="width:12px;height:12px;display:inline;margin-right:6px;color:var(--lime);"></i>
+                Long run — Z2 effort
+              </span>
+              <span class="week-row-dur">1:45 hr</span>
+              <span class="week-row-tss">112 TSS</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Plan tiers -->
+        <div class="plans-grid" style="grid-template-columns:1fr;" >
+          <div class="plan-card reveal">
+            <span class="plan-badge light">Foundation</span>
+            <div class="plan-name light">Base Builder</div>
+            <div class="plan-desc light">Perfect for first-timers targeting a strong finish. Systematic aerobic base with progressive overload.</div>
+            <div class="plan-hours" style="color:var(--lime);">8–10<span style="font-size:16px;font-weight:400;color:var(--neutral);"> hrs/wk</span></div>
+            <div class="plan-features">
+              <div class="plan-feature" style="color:var(--neutral);">
+                <div class="plan-feature-dot light"><i data-lucide="check" style="width:10px;height:10px;"></i></div>
+                Aerobic base building
+              </div>
+              <div class="plan-feature" style="color:var(--neutral);">
+                <div class="plan-feature-dot light"><i data-lucide="check" style="width:10px;height:10px;"></i></div>
+                Weekly brick sessions
+              </div>
+              <div class="plan-feature" style="color:var(--neutral);">
+                <div class="plan-feature-dot light"><i data-lucide="check" style="width:10px;height:10px;"></i></div>
+                Race simulation week
+              </div>
+            </div>
+          </div>
+
+          <div class="plan-card featured reveal">
+            <span class="plan-badge dark">Most Popular</span>
+            <div class="plan-name dark">Performance</div>
+            <div class="plan-desc dark">For athletes targeting a PB. Race-specific intervals and lactate-threshold development.</div>
+            <div class="plan-hours" style="color:#000;">10–13<span style="font-size:16px;font-weight:400;opacity:.6;"> hrs/wk</span></div>
+            <div class="plan-features">
+              <div class="plan-feature" style="color:rgba(0,0,0,.8);">
+                <div class="plan-feature-dot dark"><i data-lucide="check" style="width:10px;height:10px;"></i></div>
+                Everything in Foundation
+              </div>
+              <div class="plan-feature" style="color:rgba(0,0,0,.8);">
+                <div class="plan-feature-dot dark"><i data-lucide="check" style="width:10px;height:10px;"></i></div>
+                Power-based bike targets
+              </div>
+              <div class="plan-feature" style="color:rgba(0,0,0,.8);">
+                <div class="plan-feature-dot dark"><i data-lucide="check" style="width:10px;height:10px;"></i></div>
+                Race-pace run intervals
+              </div>
+              <div class="plan-feature" style="color:rgba(0,0,0,.8);">
+                <div class="plan-feature-dot dark"><i data-lucide="check" style="width:10px;height:10px;"></i></div>
+                Adaptive load management
+              </div>
+            </div>
+          </div>
+
+          <div class="plan-card reveal">
+            <span class="plan-badge light">Elite</span>
+            <div class="plan-name light">Race Ready</div>
+            <div class="plan-desc light">For competitive age-groupers chasing the podium or Kona qualification slots.</div>
+            <div class="plan-hours" style="color:var(--lime);">13–16<span style="font-size:16px;font-weight:400;color:var(--neutral);"> hrs/wk</span></div>
+            <div class="plan-features">
+              <div class="plan-feature" style="color:var(--neutral);">
+                <div class="plan-feature-dot light"><i data-lucide="check" style="width:10px;height:10px;"></i></div>
+                Everything in Performance
+              </div>
+              <div class="plan-feature" style="color:var(--neutral);">
+                <div class="plan-feature-dot light"><i data-lucide="check" style="width:10px;height:10px;"></i></div>
+                AI-adaptive workouts
+              </div>
+              <div class="plan-feature" style="color:var(--neutral);">
+                <div class="plan-feature-dot light"><i data-lucide="check" style="width:10px;height:10px;"></i></div>
+                Heat & altitude protocols
+              </div>
+              <div class="plan-feature" style="color:var(--neutral);">
+                <div class="plan-feature-dot light"><i data-lucide="check" style="width:10px;height:10px;"></i></div>
+                Direct coach messaging
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── STATS ──────────────────────────────────────────────────── -->
+  <section>
+    <div class="section" style="padding-top:72px;padding-bottom:72px;">
+      <div class="stats-grid">
+        <div class="stat-card reveal">
+          <div class="stat-num"><span data-count="47832">0</span></div>
+          <div class="stat-label">Athletes training on HIB</div>
+        </div>
+        <div class="stat-card reveal">
+          <div class="stat-num"><span data-count="1247">0</span>+</div>
+          <div class="stat-label">70.3 races tracked</div>
+        </div>
+        <div class="stat-card reveal">
+          <div class="stat-num">23<span style="font-size:24px;">min</span></div>
+          <div class="stat-label">Avg finish time improvement</div>
+        </div>
+        <div class="stat-card reveal">
+          <div class="stat-num"><span data-count="96">0</span>%</div>
+          <div class="stat-label">Athlete satisfaction</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── TESTIMONIALS ───────────────────────────────────────────── -->
+  <section style="background:var(--surface);border-top:1px solid var(--border);">
+    <div class="section">
+      <div class="section-label reveal" style="justify-content:center;">
+        <i data-lucide="users" style="width:14px;height:14px;"></i>
+        Athletes
+      </div>
+      <h2 class="section-title reveal" style="text-align:center;margin-bottom:48px;">Built by Triathletes,<br/>for Triathletes</h2>
+
+      <div class="testimonials-grid">
+        <div class="testimonial-card reveal">
+          <div class="stars">
+            <i data-lucide="star" style="width:14px;height:14px;fill:var(--lime);"></i>
+            <i data-lucide="star" style="width:14px;height:14px;fill:var(--lime);"></i>
+            <i data-lucide="star" style="width:14px;height:14px;fill:var(--lime);"></i>
+            <i data-lucide="star" style="width:14px;height:14px;fill:var(--lime);"></i>
+            <i data-lucide="star" style="width:14px;height:14px;fill:var(--lime);"></i>
+          </div>
+          <p class="testimonial-quote">
+            "HIB's brick analysis completely changed how I approach T2. I could see exactly where I was losing time and fixed my run-off-bike pacing in just 3 weeks."
+          </p>
+          <div class="testimonial-name">Sarah M.</div>
+          <div class="testimonial-race">70.3 Mallorca — 5:07:34 · AG 2nd Place</div>
+        </div>
+
+        <div class="testimonial-card reveal">
+          <div class="stars">
+            <i data-lucide="star" style="width:14px;height:14px;fill:var(--lime);"></i>
+            <i data-lucide="star" style="width:14px;height:14px;fill:var(--lime);"></i>
+            <i data-lucide="star" style="width:14px;height:14px;fill:var(--lime);"></i>
+            <i data-lucide="star" style="width:14px;height:14px;fill:var(--lime);"></i>
+            <i data-lucide="star" style="width:14px;height:14px;fill:var(--lime);"></i>
+          </div>
+          <p class="testimonial-quote">
+            "As a first-timer, the Race Day Planner was invaluable. I knew exactly what pace to hold on the bike so I could still run. Finished feeling strong, which I'd never expected."
+          </p>
+          <div class="testimonial-name">James K.</div>
+          <div class="testimonial-race">70.3 Cascais — 5:44:12 · First Finisher</div>
+        </div>
+
+        <div class="testimonial-card reveal">
+          <div class="stars">
+            <i data-lucide="star" style="width:14px;height:14px;fill:var(--lime);"></i>
+            <i data-lucide="star" style="width:14px;height:14px;fill:var(--lime);"></i>
+            <i data-lucide="star" style="width:14px;height:14px;fill:var(--lime);"></i>
+            <i data-lucide="star" style="width:14px;height:14px;fill:var(--lime);"></i>
+            <i data-lucide="star" style="width:14px;height:14px;fill:var(--lime);"></i>
+          </div>
+          <p class="testimonial-quote">
+            "The power analysis for the bike leg is on par with what my pro coach uses. Normalized power, variability index, decoupling — it's all there and easy to act on."
+          </p>
+          <div class="testimonial-name">Ana R.</div>
+          <div class="testimonial-race">70.3 World Championships — 4:48:20 · Kona Qualifier</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── PRICING ─────────────────────────────────────────────────── -->
+  <section id="pricing">
+    <div class="section">
+      <div class="section-label reveal" style="justify-content:center;">
+        <i data-lucide="tag" style="width:14px;height:14px;"></i>
+        Pricing
+      </div>
+      <h2 class="section-title reveal" style="text-align:center;">Simple, Transparent<br/>Pricing</h2>
+      <p class="section-sub reveal" style="text-align:center;margin:0 auto 48px;">
+        No hidden fees. No gear lock-in. Cancel any month — your data is always yours.
+      </p>
+
+      <div class="pricing-grid">
+        <!-- Free -->
+        <div class="pricing-card reveal">
+          <div style="font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--neutral);margin-bottom:16px;">Starter</div>
+          <div class="price-tag" style="color:#fff;">$0<span class="price-period" style="color:var(--neutral);">/mo</span></div>
+          <p style="font-size:14px;color:var(--neutral);margin:16px 0 24px;line-height:1.5;">All the basics to track your first 70.3 journey.</p>
+          <a href="#" class="btn-outline" style="width:100%;justify-content:center;margin-bottom:8px;">Get started free</a>
+          <ul class="price-features">
+            <li class="price-feature" style="color:var(--neutral);">
+              <i data-lucide="check" style="width:16px;height:16px;color:var(--lime);flex-shrink:0;"></i>
+              Swim, bike & run tracking
+            </li>
+            <li class="price-feature" style="color:var(--neutral);">
+              <i data-lucide="check" style="width:16px;height:16px;color:var(--lime);flex-shrink:0;"></i>
+              Basic analytics dashboard
+            </li>
+            <li class="price-feature" style="color:var(--neutral);">
+              <i data-lucide="check" style="width:16px;height:16px;color:var(--lime);flex-shrink:0;"></i>
+              Race calendar & countdowns
+            </li>
+            <li class="price-feature" style="color:var(--neutral);">
+              <i data-lucide="check" style="width:16px;height:16px;color:var(--lime);flex-shrink:0;"></i>
+              3 device syncs/month
+            </li>
+          </ul>
+        </div>
+
+        <!-- Pro (featured) -->
+        <div class="pricing-card featured reveal">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+            <div style="font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#000;">Pro</div>
+            <div style="background:rgba(0,0,0,.15);color:#000;border-radius:9999px;padding:3px 10px;font-size:11px;font-weight:700;">Most Popular</div>
+          </div>
+          <div class="price-tag" style="color:#000;">$14<span class="price-period" style="color:rgba(0,0,0,.6);">.99/mo</span></div>
+          <p style="font-size:14px;color:rgba(0,0,0,.7);margin:16px 0 24px;line-height:1.5;">Full analytics and training tools for serious athletes.</p>
+          <a href="#" class="btn-primary" style="width:100%;justify-content:center;background:#000;color:var(--lime);margin-bottom:8px;">Start Pro Trial</a>
+          <ul class="price-features">
+            <li class="price-feature" style="color:rgba(0,0,0,.8);">
+              <i data-lucide="check" style="width:16px;height:16px;color:#000;flex-shrink:0;"></i>
+              Everything in Starter
+            </li>
+            <li class="price-feature" style="color:rgba(0,0,0,.8);">
+              <i data-lucide="check" style="width:16px;height:16px;color:#000;flex-shrink:0;"></i>
+              Power zones & TSS tracking
+            </li>
+            <li class="price-feature" style="color:rgba(0,0,0,.8);">
+              <i data-lucide="check" style="width:16px;height:16px;color:#000;flex-shrink:0;"></i>
+              Race Day Planner
+            </li>
+            <li class="price-feature" style="color:rgba(0,0,0,.8);">
+              <i data-lucide="check" style="width:16px;height:16px;color:#000;flex-shrink:0;"></i>
+              16-week training plans
+            </li>
+            <li class="price-feature" style="color:rgba(0,0,0,.8);">
+              <i data-lucide="check" style="width:16px;height:16px;color:#000;flex-shrink:0;"></i>
+              Brick Intelligence analytics
+            </li>
+            <li class="price-feature" style="color:rgba(0,0,0,.8);">
+              <i data-lucide="check" style="width:16px;height:16px;color:#000;flex-shrink:0;"></i>
+              Unlimited device syncs
+            </li>
+          </ul>
+        </div>
+
+        <!-- Elite -->
+        <div class="pricing-card reveal">
+          <div style="font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--neutral);margin-bottom:16px;">Elite</div>
+          <div class="price-tag" style="color:#fff;">$29<span class="price-period" style="color:var(--neutral);">.99/mo</span></div>
+          <p style="font-size:14px;color:var(--neutral);margin:16px 0 24px;line-height:1.5;">AI coaching and pro-level tools for age-group podium hunters.</p>
+          <a href="#" class="btn-primary" style="width:100%;justify-content:center;margin-bottom:8px;">Go Elite</a>
+          <ul class="price-features">
+            <li class="price-feature" style="color:var(--neutral);">
+              <i data-lucide="check" style="width:16px;height:16px;color:var(--lime);flex-shrink:0;"></i>
+              Everything in Pro
+            </li>
+            <li class="price-feature" style="color:var(--neutral);">
+              <i data-lucide="check" style="width:16px;height:16px;color:var(--lime);flex-shrink:0;"></i>
+              AI adaptive coaching
+            </li>
+            <li class="price-feature" style="color:var(--neutral);">
+              <i data-lucide="check" style="width:16px;height:16px;color:var(--lime);flex-shrink:0;"></i>
+              Lactate threshold modeling
+            </li>
+            <li class="price-feature" style="color:var(--neutral);">
+              <i data-lucide="check" style="width:16px;height:16px;color:var(--lime);flex-shrink:0;"></i>
+              Heat & altitude protocols
+            </li>
+            <li class="price-feature" style="color:var(--neutral);">
+              <i data-lucide="check" style="width:16px;height:16px;color:var(--lime);flex-shrink:0;"></i>
+              Priority coach messaging
+            </li>
+            <li class="price-feature" style="color:var(--neutral);">
+              <i data-lucide="check" style="width:16px;height:16px;color:var(--lime);flex-shrink:0;"></i>
+              Kona slot strategy reports
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CTA ────────────────────────────────────────────────────── -->
+  <section id="cta">
+    <div class="cta-inner">
+      <div class="pill reveal" style="margin:0 auto 24px;display:inline-flex;">
+        <span class="pill-dot"></span>
+        Your race is waiting
+      </div>
+      <h2 class="section-title reveal" style="text-align:center;font-size:clamp(40px,5vw,72px);">
+        Your 70.3<br/>Starts Here
+      </h2>
+      <p class="section-sub reveal" style="text-align:center;margin:0 auto 40px;">
+        Join 47,000+ athletes who train smarter with HIB. Free forever. Upgrade when you're ready.
+      </p>
+      <div class="reveal" style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        <a href="#" class="btn-primary lg">
+          Start Training Free
+          <i data-lucide="arrow-right" style="width:18px;height:18px;"></i>
+        </a>
+        <a href="#" class="btn-outline lg">
+          <i data-lucide="calendar" style="width:16px;height:16px;"></i>
+          Book a Demo
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ─────────────────────────────────────────────────── -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div>
+        <div class="logo" style="margin-bottom:12px;">H<span>I</span>B</div>
+        <p style="font-size:13px;color:rgba(212,212,212,.5);max-width:220px;line-height:1.6;">
+          Built for Ironman 70.3.<br/>Not a runner app with a wetsuit.
+        </p>
+      </div>
+
+      <div class="footer-col">
+        <h4>Product</h4>
+        <ul class="footer-links">
+          <li><a href="#">Features</a></li>
+          <li><a href="#">Training Plans</a></li>
+          <li><a href="#">Analytics</a></li>
+          <li><a href="#">Race Planner</a></li>
+          <li><a href="#">Integrations</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Disciplines</h4>
+        <ul class="footer-links">
+          <li><a href="#">Swim (1.2mi)</a></li>
+          <li><a href="#">Bike (56mi)</a></li>
+          <li><a href="#">Run (13.1mi)</a></li>
+          <li><a href="#">Transitions</a></li>
+          <li><a href="#">Brick Training</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Company</h4>
+        <ul class="footer-links">
+          <li><a href="#">About</a></li>
+          <li><a href="#">Blog</a></li>
+          <li><a href="#">Careers</a></li>
+          <li><a href="#">Community</a></li>
+          <li><a href="#">Contact</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Connect</h4>
+        <ul class="footer-links">
+          <li><a href="#">Strava Sync</a></li>
+          <li><a href="#">Garmin Connect</a></li>
+          <li><a href="#">Wahoo Systm</a></li>
+          <li><a href="#">Apple Health</a></li>
+          <li><a href="#">API Access</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <span>© 2026 HIB Training. All rights reserved.</span>
+      <div style="display:flex;gap:20px;">
+        <a href="#" style="color:inherit;text-decoration:none;transition:color 150ms ease;" onmouseover="this.style.color='var(--lime)'" onmouseout="this.style.color=''">Privacy</a>
+        <a href="#" style="color:inherit;text-decoration:none;transition:color 150ms ease;" onmouseover="this.style.color='var(--lime)'" onmouseout="this.style.color=''">Terms</a>
+        <a href="#" style="color:inherit;text-decoration:none;transition:color 150ms ease;" onmouseover="this.style.color='var(--lime)'" onmouseout="this.style.color=''">Cookie Policy</a>
+      </div>
+    </div>
+  </footer>
+
+</div><!-- #app -->
+
+<!-- ─────────────────────────────────────────────────────────────── -->
+<!-- SCRIPTS                                                         -->
+<!-- ─────────────────────────────────────────────────────────────── -->
+<script>
+/* ── Lucide icons ──────────────────────────────────────────────── */
+lucide.createIcons();
+
+/* ── WebGL Perspective Grid Background ─────────────────────────── */
+(function() {
+  const canvas = document.getElementById('webgl-bg');
+  const gl = canvas.getContext('webgl');
+
+  if (!gl) {
+    canvas.style.display = 'none';
+    return;
+  }
+
+  const VS = `
+    attribute vec2 a_pos;
+    void main() {
+      gl_Position = vec4(a_pos, 0.0, 1.0);
+    }
+  `;
+
+  const FS = `
+    precision highp float;
+    uniform vec2  u_res;
+    uniform float u_t;
+    uniform vec2  u_mouse;
+
+    void main() {
+      vec2 uv = gl_FragCoord.xy / u_res;
+
+      /* Background */
+      vec3 bg   = vec3(0.012, 0.012, 0.012);
+      vec3 lime = vec3(0.788, 0.953, 0.396);
+
+      /* Subtle mouse drift that shifts with depth */
+      vec2 mNorm = u_mouse / u_res;
+      float driftX = (mNorm.x - 0.5) * 0.035;
+      float driftY = (mNorm.y - 0.5) * 0.018;
+
+      /* Horizon sits at ~60% from bottom */
+      float horizon = 0.60 + driftY;
+
+      float gridAlpha = 0.0;
+
+      if (uv.y < horizon) {
+        /* Depth: 0 at horizon → 1 at bottom edge */
+        float depth = (horizon - uv.y) / horizon;
+
+        /* Perspective reciprocal — capped to avoid artefacts */
+        float persp = 1.0 / (depth + 0.04);
+        persp = min(persp, 28.0);
+
+        /* — Horizontal lines — equal spacing in perspective space */
+        float hCoord = persp * 0.38;
+        float hFrac  = fract(hCoord);
+        float hLine  = 1.0 - smoothstep(0.0, 0.05, min(hFrac, 1.0 - hFrac));
+        hLine *= 0.75;
+
+        /* — Vertical lines — fan from vanishing point */
+        float xOff   = (uv.x - 0.5 + driftX) * persp * 0.10;
+        float vFrac  = fract(xOff + 10.0);
+        float vLine  = 1.0 - smoothstep(0.0, 0.055, min(vFrac, 1.0 - vFrac));
+        vLine *= 0.60;
+
+        gridAlpha = max(hLine, vLine);
+
+        /* Fade envelope */
+        float fadeHorizon = smoothstep(0.0, 0.07, depth);
+        float fadeBottom  = 1.0 - smoothstep(0.55, 1.0, depth);
+        float fadeSide    = 1.0 - smoothstep(0.36, 0.5, abs(uv.x - 0.5) * 2.0);
+        gridAlpha *= fadeHorizon * fadeBottom * fadeSide;
+      }
+
+      /* Horizon glow line */
+      float hGlow   = exp(-abs(uv.y - horizon) * 22.0) * 0.10;
+      gridAlpha     = max(gridAlpha, hGlow);
+
+      /* Breathing pulse — slow, meditative */
+      float breath  = 0.5 + 0.5 * sin(u_t * 0.55);
+      gridAlpha    *= mix(0.22, 0.85, breath);
+
+      vec3 color = mix(bg, lime, gridAlpha * 0.42);
+      gl_FragColor = vec4(color, 1.0);
+    }
+  `;
+
+  function compileShader(src, type) {
+    const sh = gl.createShader(type);
+    gl.shaderSource(sh, src);
+    gl.compileShader(sh);
+    return sh;
+  }
+
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compileShader(VS, gl.VERTEX_SHADER));
+  gl.attachShader(prog, compileShader(FS, gl.FRAGMENT_SHADER));
+  gl.linkProgram(prog);
+  gl.useProgram(prog);
+
+  /* Full-screen triangle */
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
+
+  const posLoc   = gl.getAttribLocation(prog, 'a_pos');
+  const uRes     = gl.getUniformLocation(prog, 'u_res');
+  const uTime    = gl.getUniformLocation(prog, 'u_t');
+  const uMouse   = gl.getUniformLocation(prog, 'u_mouse');
+
+  gl.enableVertexAttribArray(posLoc);
+  gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
+
+  let mx = 0, my = 0;
+  window.addEventListener('mousemove', e => {
+    /* Smooth mouse tracking */
+    mx += (e.clientX - mx) * 0.06;
+    my += (e.clientY - my) * 0.06;
+  });
+
+  function resize() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+
+  let startTime = performance.now();
+
+  function render() {
+    const t = (performance.now() - startTime) * 0.001;
+    gl.uniform2f(uRes,   canvas.width, canvas.height);
+    gl.uniform1f(uTime,  t);
+    gl.uniform2f(uMouse, mx, canvas.height - my);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    requestAnimationFrame(render);
+  }
+
+  /* Smooth mouse interpolation inside the render loop */
+  (function smoothMouse() {
+    window.addEventListener('mousemove', e => {
+      const targetX = e.clientX;
+      const targetY = e.clientY;
+      function lerp() {
+        mx += (targetX - mx) * 0.04;
+        my += (targetY - my) * 0.04;
+      }
+      lerp();
+    });
+  })();
+
+  render();
+})();
+
+/* ── GSAP Scroll Animations ────────────────────────────────────── */
+gsap.registerPlugin(ScrollTrigger);
+
+/* Hero entrance — staggered */
+const heroTl = gsap.timeline({ delay: 0.2 });
+heroTl
+  .from('#hero-label',  { opacity: 0, y: 16, duration: 0.5, ease: 'power2.out' })
+  .from('#hero-title',  { opacity: 0, y: 48, duration: 0.7, ease: 'power3.out' }, '-=0.2')
+  .from('#hero-sub',    { opacity: 0, y: 24, duration: 0.55, ease: 'power2.out' }, '-=0.35')
+  .from('#hero-ctas',   { opacity: 0, y: 20, duration: 0.5, ease: 'power2.out' }, '-=0.3')
+  .from('#hero-pills > *', {
+    opacity: 0, y: 14, scale: 0.96, duration: 0.4,
+    stagger: 0.08, ease: 'power2.out'
+  }, '-=0.25');
+
+/* Generic reveal: every element with class .reveal */
+gsap.utils.toArray('.reveal').forEach(el => {
+  gsap.from(el, {
+    opacity: 0,
+    y: 36,
+    duration: 0.7,
+    ease: 'power2.out',
+    scrollTrigger: {
+      trigger: el,
+      start: 'top 88%',
+      toggleActions: 'play none none none',
+    }
+  });
+});
+
+/* Week bars animate in */
+ScrollTrigger.create({
+  trigger: '#weekChart',
+  start: 'top 85%',
+  onEnter: () => {
+    gsap.to('#weekChart .week-bar', {
+      scaleY: 1,
+      duration: 0.8,
+      ease: 'power2.out',
+      stagger: 0.07
+    });
+  }
+});
+
+/* Zone fill bars */
+ScrollTrigger.create({
+  trigger: '.zone-bar-row',
+  start: 'top 80%',
+  onEnter: () => {
+    document.querySelectorAll('.zone-fill').forEach(fill => {
+      fill.style.transform = 'scaleX(1)';
+    });
+  }
+});
+
+/* ── Counter Animations ────────────────────────────────────────── */
+function animateCounter(el, target, duration) {
+  const start     = performance.now();
+  const isDecimal = String(target).includes('.');
+
+  function step(now) {
+    const pct  = Math.min((now - start) / duration, 1);
+    const ease = 1 - Math.pow(1 - pct, 3);
+    const val  = isDecimal ? (ease * target).toFixed(1) : Math.floor(ease * target);
+    el.textContent = Number(val).toLocaleString();
+    if (pct < 1) requestAnimationFrame(step);
+    else el.textContent = Number(target).toLocaleString();
+  }
+
+  requestAnimationFrame(step);
+}
+
+const counterEls = document.querySelectorAll('[data-count]');
+
+const counterObserver = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const el     = entry.target;
+      const target = Number(el.getAttribute('data-count'));
+      animateCounter(el, target, 1800);
+      counterObserver.unobserve(el);
+    }
+  });
+}, { threshold: 0.3 });
+
+counterEls.forEach(el => counterObserver.observe(el));
+
+/* ── Week bar initial state (hidden) ──────────────────────────── */
+document.querySelectorAll('.week-bar').forEach(b => {
+  b.style.transform = 'scaleY(0)';
+});
+
+/* ── Hover glow on discipline cards ───────────────────────────── */
+document.querySelectorAll('.discipline-card').forEach(card => {
+  card.addEventListener('mouseenter', () => {
+    gsap.to(card.querySelector('.disc-icon'), {
+      scale: 1.1, duration: 0.2, ease: 'power2.out'
+    });
+  });
+  card.addEventListener('mouseleave', () => {
+    gsap.to(card.querySelector('.disc-icon'), {
+      scale: 1, duration: 0.2, ease: 'power2.out'
+    });
+  });
+});
+
+/* ── Nav scroll opacity ─────────────────────────────────────────── */
+const nav = document.querySelector('.nav');
+window.addEventListener('scroll', () => {
+  const scrolled = window.scrollY > 40;
+  nav.style.background = scrolled
+    ? 'rgba(3,3,3,0.92)'
+    : 'rgba(3,3,3,0.7)';
+}, { passive: true });
+</script>
+
+</body>
+</html>
